@@ -1,3 +1,66 @@
 #!/bin/bash
+#
+# AAI 0.1b - Here you go!
+# 
+#   Criado em 07/10/2017
+# Alterado em 08/10/2017
+# 
+# Por: Arch Linux Brasil Dev Team
 
-...
+# Parametros básicos
+tema="aai"
+
+if [ $(id -u) == 0 ]; then
+   echo "Este script precisa ser usado como root." 1>&2
+   exit 1
+fi
+
+apps=( "dialog" )
+
+for app in ${apps[@]} 
+do
+    which $app 1> /dev/null 2> /dev/null
+    if [ $? != 0 ]; then
+        echo
+        read -p "O aplicativo $app não foi encontrado. Deseja instalar? [s/N] " resp
+        if [ $resp == [sS] ]; then 
+            pacman -S $app
+        else
+        	echo "Programa abortado..."
+        	exit 1
+        fi
+    fi
+done
+
+# Parametros internos
+titulo="Arch Linux Automatic Installer"
+subtitulo="Arch Linux Automatic Installer"
+
+# Vars
+export DIALOGRC="temas/${tema}.cfg"
+
+# Welcome
+dialog --backtitle "$titulo" --title "$subtitulo" --textbox aai.txt 200 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
+
+if [ $? == 1 ]; then 
+    exit
+fi
+
+# Setando os locales
+LOCALE=$(dialog --backtitle "$titulo" --title "$subtitulo" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+localectl set-x11-keymap $LOCALE
+
+# Conectividade
+INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | sed 's/$/ -/')
+INTERFACE=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual sua interface?" 0 0 10 $INTERFACES 3>&1 1>&2 2>&3)
+
+# https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
+# e = cabeada, w = wireless | systemd owns the world...
+TIPO=$(echo $INTERFACE | head -c 1)
+
+# WIP...
+#$(cat $ARQUIVO | cut -d: -f1 | sed 's/$/ o/')
+#sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
+#pacman -S wpa_supplicant wpa_actiond dialog iw sudo bash-completion efibootmgr
+
+exit 0
