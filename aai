@@ -10,8 +10,6 @@
 #############################################
 ########## Parametros básicos ###############
 #############################################
-tema="aai"
-
 if [ $(id -u) == 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
    exit 1
@@ -34,6 +32,13 @@ do
     fi
 done
 
+TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
+TEMA=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
+
+if [ $? == 1 ]; then 
+    TEMA="anywhere"
+fi
+
 #############################################
 ########## Parametros internos ##############
 #############################################
@@ -43,7 +48,7 @@ subtitulo="Arch Linux Automatic Installer"
 #############################################
 ########### VARS ############################
 #############################################
-export DIALOGRC="temas/${tema}.cfg"
+export DIALOGRC="temas/${TEMA}.cfg"
 
 # Welcome
 dialog --backtitle "$titulo" --title "$subtitulo" --textbox aai.txt 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
@@ -77,6 +82,7 @@ DISCO=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual seu disco
 
 FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
 FILESYSTEM=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
+
 
 # WIP...
 #$(cat $ARQUIVO | cut -d: -f1 | sed 's/$/ o/')

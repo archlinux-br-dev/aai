@@ -33,7 +33,7 @@ A partir deste momento o AAI deve lhe guiar por todos os passos, desde a configu
 ### Suporte e Contato
 
 [Telegram](https://t.me/archbrdev)  
-[lucas@archlinux.com.br](mailto:lucas@archlinux.com.br)
+[E-mail](mailto:lucas@archlinux.com.br)
 
 ### Motivação
 
