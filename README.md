@@ -1,9 +1,12 @@
 ## AAI (Arch Linux Automatic Installer)
+```
              _ 
   __ _  __ _(_)
  / _` |/ _` | |
 | (_| | (_| | |
  \__,_|\__,_|_|
+               
+```
                
 O AAI é um instalador automático simples e fácil de usar para o Arch Linux.
 
