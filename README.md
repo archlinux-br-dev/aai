@@ -7,12 +7,12 @@
  \__,_|\__,_|_|
                
 ```
-               
+
 O AAI é um instalador automático simples e fácil de usar para o Arch Linux.
 
 ### Instalação
 
-[Baixe](https://www.archlinux.org/download/) o [Arch Linux](https://wwwarchlinux.org) normalmente, grave a imagem em um CD, DVD ou Pen-Drive, utilizando o [Etcher](https://etcher.io) ou manualmente: 
+[Baixe](https://www.archlinux.org/download/) o [Arch Linux](https://wwwarchlinux.org) normalmente, grave a imagem em um CD, DVD ou Pen-Drive, utilizando o [Etcher](https://etcher.io)(Windows, Linux, MacOS) ou manualmente(Linux): 
 
 ```bash
 sudo dd if=/home/usuario/Downloads/archlinux-2017.10.01.iso of=/dev/sdX bs=4M status=progress && sync
@@ -28,5 +28,5 @@ bash <(curl -s -L http://bit.ly/arch-aai)
 
 ### Suporte e Contato
 
-[Telegram](https://t.me/archbrdev)
+[Telegram](https://t.me/archbrdev)  
 [lucas@archlinux.com.br](mailto:lucas@archlinux.com.br)
