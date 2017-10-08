@@ -7,7 +7,9 @@
 # 
 # Por: Arch Linux Brasil Dev Team
 
-# Parametros básicos
+#############################################
+########## Parametros básicos ###############
+#############################################
 tema="aai"
 
 if [ $(id -u) == 0 ]; then
@@ -32,31 +34,49 @@ do
     fi
 done
 
-# Parametros internos
+#############################################
+########## Parametros internos ##############
+#############################################
 titulo="Arch Linux Automatic Installer"
 subtitulo="Arch Linux Automatic Installer"
 
-# Vars
+#############################################
+########### VARS ############################
+#############################################
 export DIALOGRC="temas/${tema}.cfg"
 
 # Welcome
-dialog --backtitle "$titulo" --title "$subtitulo" --textbox aai.txt 200 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
+dialog --backtitle "$titulo" --title "$subtitulo" --textbox aai.txt 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
 
 if [ $? == 1 ]; then 
     exit
 fi
 
-# Setando os locales
+#############################################
+########### LOCALES #########################
+#############################################
 LOCALE=$(dialog --backtitle "$titulo" --title "$subtitulo" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
-localectl set-x11-keymap $LOCALE
+#localectl set-x11-keymap "$LOCALE"
 
 # Conectividade
-INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | sed 's/$/ -/')
-INTERFACE=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual sua interface?" 0 0 10 $INTERFACES 3>&1 1>&2 2>&3)
+INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
+INTERFACE=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
 
 # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 # e = cabeada, w = wireless | systemd owns the world...
 TIPO=$(echo $INTERFACE | head -c 1)
+
+#dhcpcd $INTERFACE
+
+#############################################
+############ PARTICIONAMENTO ################
+#############################################
+DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print v++,$1}')
+DISCO=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
+
+
+FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
+FILESYSTEM=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
 # WIP...
 #$(cat $ARQUIVO | cut -d: -f1 | sed 's/$/ o/')
