@@ -10,6 +10,8 @@
 #############################################
 ########## Parametros básicos ###############
 #############################################
+export DIALOGRC="/tmp/aai/temas/anywhere.cfg"
+
 if [ $(id -u) == 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
    exit 1
@@ -26,65 +28,150 @@ do
         if [ $resp == [sS] ]; then 
             pacman -S $app
         else
-        	echo "Programa abortado..."
-        	exit 1
+            echo "Programa abortado..."
+            exit 1
         fi
     fi
 done
 
+cat > $logo <<- EOM
+             _ 
+  __ _  __ _(_)
+ / _` |/ _` | |
+| (_| | (_| | |
+ \__,_|\__,_|_|
+
+EOM
+
+TITULO="Arch Linux Automatic Installer"
+SUBTITULO="Arch Linux Automatic Installer"
+TMP_AAI="/tmp/aai"
+
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
-TEMA=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
+TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then 
+    exit
+fi
 
 if [ $? == 1 ]; then 
     TEMA="anywhere"
 fi
 
-#############################################
-########## Parametros internos ##############
-#############################################
-titulo="Arch Linux Automatic Installer"
-subtitulo="Arch Linux Automatic Installer"
+if [ ! -d $TMP_AAI ]; then
+  mkdir -p $TMP_AAI
+fi
+
+if [ ! -f ${TMP_AAI}/temas/${TEMA}.cfg ]; then
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${TMP_AAI}/temas/${TEMA}.cfg
+fi
 
 #############################################
 ########### VARS ############################
 #############################################
-export DIALOGRC="temas/${TEMA}.cfg"
+export DIALOGRC="${TMP_AAI}/temas/${TEMA}.cfg"
 
 # Welcome
-dialog --backtitle "$titulo" --title "$subtitulo" --textbox aai.txt 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
+dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
 
-if [ $? == 1 ]; then 
+if [ $? != 0 ]; then 
     exit
 fi
 
 #############################################
 ########### LOCALES #########################
 #############################################
-LOCALE=$(dialog --backtitle "$titulo" --title "$subtitulo" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
-#localectl set-x11-keymap "$LOCALE"
+LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then 
+    exit
+fi
+
+echo "localectl set-x11-keymap $LOCALE"
+
+
+
+#############################################
+########### OPÇÕES ##########################
+#############################################
+OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then 
+    exit
+fi
+
+if [ $? == 0 ]; then 
+  for op in ${OPTS[@]}; do
+    case $op in
+      "Download Total") 
+        sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
+      ;;
+      "Cores") 
+        sed -i '/Color/s/^#//g' /etc/pacman.conf
+      ;;
+      "Reflector") 
+        pacman -Sy
+        pacman -S reflector
+        if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
+          cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
+        fi
+        reflector --verbose -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+      ;;
+    esac
+  done
+fi
 
 # Conectividade
 INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
-INTERFACE=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
+INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then 
+    exit
+fi
 
 # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 # e = cabeada, w = wireless | systemd owns the world...
 TIPO=$(echo $INTERFACE | head -c 1)
 
-#dhcpcd $INTERFACE
+if [ "$TIPO" == "e" ]; then
+  echo "systemctl start dhcpcd@${INTERFACE}"
+else
+  #echo "pacman -S wpa_supplicant wpa_actiond iw"
+  echo "wifi-menu"
+fi
 
 #############################################
 ############ PARTICIONAMENTO ################
 #############################################
-DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print v++,$1}')
-DISCO=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
+DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
+DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
+if [ $? != 0 ]; then 
+    exit
+fi
 
+dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
+
+if [ $? != 0 ]; then 
+    exit
+fi
+
+echo "cfdisk $DISCO"
+
+#############################################
+############ FORMATAÇÃO #####################
+#############################################
 FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
-FILESYSTEM=$(dialog --backtitle "$titulo" --title "$subtitulo" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
+FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
+if [ $? != 0 ]; then 
+    exit
+fi
 
 # WIP...
+# TODO
+# - Encapsulamento em funções...
+# - Detecção de instalação prévia, partições, sistemas de arquivos, reconfiguração sem formatação.
 #$(cat $ARQUIVO | cut -d: -f1 | sed 's/$/ o/')
 #sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
 #pacman -S wpa_supplicant wpa_actiond dialog iw sudo bash-completion efibootmgr

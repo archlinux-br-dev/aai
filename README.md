@@ -10,7 +10,7 @@
 
 O AAI é um instalador automático simples e fácil de usar para o Arch Linux.
 
-### Instalação
+### Instalação (<span style="color:red">SCRIPT EM MODO DRY-RUN! NENHUMA ALTERAÇÃO É FEITA POR ENQUANTO!!</span>)
 
 [Baixe](https://www.archlinux.org/download/) o [Arch Linux](https://wwwarchlinux.org) normalmente, grave a imagem em um CD, DVD ou Pen-Drive, utilizando o [Etcher](https://etcher.io)(Windows, Linux, MacOS) ou manualmente(Linux): 
 
