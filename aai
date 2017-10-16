@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 # AAI 0.1b - Here you go!
-# 
+#
 #   Criado em 07/10/2017
 # Alterado em 08/10/2017
-# 
+#
 # Por: Arch Linux Brasil Dev Team
 
 #############################################
@@ -19,13 +19,13 @@ fi
 
 apps=( "dialog" )
 
-for app in ${apps[@]} 
+for app in ${apps[@]}
 do
     which $app 1> /dev/null 2> /dev/null
     if [ $? != 0 ]; then
         echo
         read -p "O aplicativo $app não foi encontrado. Deseja instalar? [s/N] " resp
-        if [ $resp == [sS] ]; then 
+        if [ $resp == [sS] ]; then
             pacman -S $app
         else
             echo "Programa abortado..."
@@ -35,7 +35,7 @@ do
 done
 
 cat > $logo <<- EOM
-             _ 
+             _
   __ _  __ _(_)
  / _` |/ _` | |
 | (_| | (_| | |
@@ -50,11 +50,11 @@ TMP_AAI="/tmp/aai"
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
-if [ $? == 1 ]; then 
+if [ $? == 1 ]; then
     TEMA="anywhere"
 fi
 
@@ -74,7 +74,7 @@ export DIALOGRC="${TMP_AAI}/temas/${TEMA}.cfg"
 # Welcome
 dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
@@ -83,7 +83,7 @@ fi
 #############################################
 LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
@@ -96,20 +96,20 @@ echo "localectl set-x11-keymap $LOCALE"
 #############################################
 OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
-if [ $? == 0 ]; then 
+if [ $? == 0 ]; then
   for op in ${OPTS[@]}; do
     case $op in
-      "Download Total") 
+      "Download Total")
         sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
       ;;
-      "Cores") 
+      "Cores")
         sed -i '/Color/s/^#//g' /etc/pacman.conf
       ;;
-      "Reflector") 
+      "Reflector")
         pacman -Sy
         pacman -S reflector
         if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
@@ -125,7 +125,7 @@ fi
 INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
 INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
@@ -146,13 +146,13 @@ fi
 DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
 DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
 dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
@@ -164,7 +164,7 @@ echo "cfdisk $DISCO"
 FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
 FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
