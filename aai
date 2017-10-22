@@ -1,10 +1,15 @@
 #!/bin/bash
 #
 # AAI 0.1b - Here you go!
-# 
+#
 #   Criado em 07/10/2017
+<<<<<<< HEAD
 # Alterado em 21/10/2017
 # 
+=======
+# Alterado em 08/10/2017
+#
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
 # Por: Arch Linux Brasil Dev Team
 # Instalação: bash <(curl -s -L http://bit.ly/arch-aai)
 # Maiores informações: https://archlinux-br-dev.github.io/aai
@@ -21,13 +26,13 @@ fi
 
 apps=( "dialog" )
 
-for app in ${apps[@]} 
+for app in ${apps[@]}
 do
     which $app 1> /dev/null 2> /dev/null
     if [ $? != 0 ]; then
         echo
         read -p "O aplicativo $app não foi encontrado. Deseja instalar? [s/N] " resp
-        if [ $resp == [sS] ]; then 
+        if [ $resp == [sS] ]; then
             pacman -S $app
         else
             echo "Programa abortado..."
@@ -37,7 +42,7 @@ do
 done
 
 cat > $logo <<- EOM
-             _ 
+             _
   __ _  __ _(_)
  / _` |/ _` | |
 | (_| | (_| | |
@@ -52,13 +57,17 @@ TMP_AAI="/tmp/aai"
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
+<<<<<<< HEAD
 proxima=locale
 
 if [ $? != 0 ]; then 
+=======
+if [ $? != 0 ]; then
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
     exit
 fi
 
-if [ $? == 1 ]; then 
+if [ $? == 1 ]; then
     TEMA="anywhere"
 fi
 
@@ -78,15 +87,26 @@ export DIALOGRC="${TMP_AAI}/temas/${TEMA}.cfg"
 # Welcome
 dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
     exit
 fi
 
 #############################################
 ########### LOCALES #########################
 #############################################
+<<<<<<< HEAD
 function locale() {
   LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+=======
+LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then
+    exit
+fi
+
+echo "localectl set-x11-keymap $LOCALE"
+
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
 
   if [ $? == 0 ]; then 
     localectl set-x11-keymap $LOCALE
@@ -96,6 +116,7 @@ function locale() {
 #############################################
 ########### OPÇÕES ##########################
 #############################################
+<<<<<<< HEAD
 function opts() {
   OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
 
@@ -124,6 +145,42 @@ function opts() {
     done
   fi
 }
+=======
+OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then
+    exit
+fi
+
+if [ $? == 0 ]; then
+  for op in ${OPTS[@]}; do
+    case $op in
+      "Download Total")
+        sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
+      ;;
+      "Cores")
+        sed -i '/Color/s/^#//g' /etc/pacman.conf
+      ;;
+      "Reflector")
+        pacman -Sy
+        pacman -S reflector
+        if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
+          cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
+        fi
+        reflector --verbose -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+      ;;
+    esac
+  done
+fi
+
+# Conectividade
+INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
+INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then
+    exit
+fi
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
 
 #############################################
 ########### CONECTIVIDADE ###################
@@ -151,6 +208,7 @@ function connect() {
 #############################################
 ############ PARTICIONAMENTO ################
 #############################################
+<<<<<<< HEAD
 function part() {
   DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
   DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
@@ -187,6 +245,22 @@ function part() {
   #   q # and we're done
   # EOF
 }
+=======
+DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
+DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
+
+if [ $? != 0 ]; then
+    exit
+fi
+
+dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
+
+if [ $? != 0 ]; then
+    exit
+fi
+
+echo "cfdisk $DISCO"
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
 
 #############################################
 ############ FORMATAÇÃO #####################
@@ -277,6 +351,7 @@ while : ; do
             exit
     esac
 
+<<<<<<< HEAD
     # Aqui é feito o tratamento genérico de Código de Retorno
     # de todas as telas. Volta para a tela anterior se for
     # CANCELAR, sai do programa se for ESC.
@@ -285,6 +360,11 @@ while : ; do
     [ $retorno -eq 255 ] && break               # Esc
 
 done
+=======
+if [ $? != 0 ]; then
+    exit
+fi
+>>>>>>> 8b7a863f4ed5bba7708b920ddd45d5d69c51dc02
 
 # WIP...
 # TODO
