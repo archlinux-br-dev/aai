@@ -3,14 +3,16 @@
 # AAI 0.1b - Here you go!
 # 
 #   Criado em 07/10/2017
-# Alterado em 08/10/2017
+# Alterado em 21/10/2017
 # 
 # Por: Arch Linux Brasil Dev Team
+# Instalação: bash <(curl -s -L http://bit.ly/arch-aai)
+# Maiores informações: https://archlinux-br-dev.github.io/aai
 
 #############################################
 ########## Parametros básicos ###############
 #############################################
-export DIALOGRC="/tmp/aai/temas/anywhere.cfg"
+#export DIALOGRC="/tmp/aai/temas/anywhere.cfg"
 
 if [ $(id -u) == 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
@@ -50,6 +52,8 @@ TMP_AAI="/tmp/aai"
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
+proxima=locale
+
 if [ $? != 0 ]; then 
     exit
 fi
@@ -58,8 +62,8 @@ if [ $? == 1 ]; then
     TEMA="anywhere"
 fi
 
-if [ ! -d $TMP_AAI ]; then
-  mkdir -p $TMP_AAI
+if [ ! -d $TMP_AAI/temas/ ]; then
+  mkdir -p $TMP_AAI/temas/
 fi
 
 if [ ! -f ${TMP_AAI}/temas/${TEMA}.cfg ]; then
@@ -81,92 +85,206 @@ fi
 #############################################
 ########### LOCALES #########################
 #############################################
-LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+function locale() {
+  LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
-    exit
-fi
-
-echo "localectl set-x11-keymap $LOCALE"
-
-
+  if [ $? == 0 ]; then 
+    localectl set-x11-keymap $LOCALE
+  fi  
+}
 
 #############################################
 ########### OPÇÕES ##########################
 #############################################
-OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
+function opts() {
+  OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
-    exit
-fi
+  if [ $? != 0 ]; then 
+      exit
+  fi
 
-if [ $? == 0 ]; then 
-  for op in ${OPTS[@]}; do
-    case $op in
-      "Download Total") 
-        sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
-      ;;
-      "Cores") 
-        sed -i '/Color/s/^#//g' /etc/pacman.conf
-      ;;
-      "Reflector") 
-        pacman -Sy
-        pacman -S reflector
-        if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
-          cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
-        fi
-        reflector --verbose -l 5 --sort rate --save /etc/pacman.d/mirrorlist
-      ;;
-    esac
-  done
-fi
+  if [ $? == 0 ]; then 
+    for op in ${OPTS[@]}; do
+      case $op in
+        "Download Total") 
+          sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
+        ;;
+        "Cores") 
+          sed -i '/Color/s/^#//g' /etc/pacman.conf
+        ;;
+        "Reflector") 
+          pacman -Sy
+          pacman -S reflector
+          if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
+            cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
+          fi
+          reflector --verbose -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+        ;;
+      esac
+    done
+  fi
+}
 
-# Conectividade
-INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
-INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
+#############################################
+########### CONECTIVIDADE ###################
+#############################################
+function connect() {
+  INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
+  INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
-    exit
-fi
+  if [ $? != 0 ]; then 
+      exit
+  fi
 
-# https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
-# e = cabeada, w = wireless | systemd owns the world...
-TIPO=$(echo $INTERFACE | head -c 1)
+  # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
+  # e = cabeada, w = wireless | systemd owns the world...
+  TIPO=$(echo $INTERFACE | head -c 1)
 
-if [ "$TIPO" == "e" ]; then
-  echo "systemctl start dhcpcd@${INTERFACE}"
-else
-  #echo "pacman -S wpa_supplicant wpa_actiond iw"
-  echo "wifi-menu"
-fi
+  if [ "$TIPO" == "e" ]; then
+    systemctl start dhcpcd@${INTERFACE}
+  else
+    pacman -S wpa_supplicant wpa_actiond iw
+    wifi-menu
+  fi
+}
 
 #############################################
 ############ PARTICIONAMENTO ################
 #############################################
-DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
-DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
+function part() {
+  DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
+  DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
-    exit
-fi
+  if [ $? != 0 ]; then 
+      exit
+  fi
 
-dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
+  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
 
-if [ $? != 0 ]; then 
-    exit
-fi
+  if [ $? != 0 ]; then 
+      exit
+  fi
 
-echo "cfdisk $DISCO"
+  cfdisk $DISCO
+
+  # WIP...
+  #sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${DISCO}
+  #   o # clear the in memory partition table
+  #   n # new partition
+  #   p # primary partition
+  #   1 # partition number 1
+  #     # default - start at beginning of disk 
+  #   +100M # 100 MB boot parttion
+  #   n # new partition
+  #   p # primary partition
+  #   2 # partion number 2
+  #     # default, start immediately after preceding partition
+  #     # default, extend partition to end of disk
+  #   a # make a partition bootable
+  #   1 # bootable partition is partition 1 -- /dev/sda1
+  #   p # print the in-memory partition table
+  #   w # write the partition table
+  #   q # and we're done
+  # EOF
+}
 
 #############################################
 ############ FORMATAÇÃO #####################
 #############################################
-FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
-FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
+function format() {
+  FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
+  FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
-    exit
-fi
+  if [ $? == 0 ]; then 
+      #comando...
+  fi
+}
+
+
+# loop principal
+while : ; do
+
+    # Aqui é identificada qual tela deve ser mostrada.
+    # Em cada tela são definidas as variáveis 'anterior'
+    # e 'proxima' # que definem os rumos da navegação.
+    case "$proxima" in
+        locale)
+            proxima=opts
+            dialog --backtitle 'Pegador de Dados' \
+                --msgbox 'Bem-vindo ao pegador de dados!' 0 0
+            ;;
+        opts)
+            anterior=locale
+            proxima=idade
+            nome=$(dialog --stdout \
+                --backtitle 'Pegador de Dados' \
+                --inputbox 'Seu nome:' 0 0)
+            ;;
+        connect)
+            anterior=opts
+            proxima=part
+            idade=$(dialog --stdout \
+                --backtitle 'Pegador de Dados'   \
+                --menu 'Qual a sua idade?' 0 0 0 \
+                'menos de 15 anos'   '' \
+                'entre 15 e 25 anos' '' \
+                'entre 25 e 40 anos' '' \
+                'mais de 40 anos'    '' )
+            ;;
+        part)
+            anterior=connect
+            proxima=format
+            casado=$(dialog --stdout \
+                --backtitle 'Pegador de Dados'    \
+                --radiolist 'Estado civil:' 0 0 0 \
+                'solteiro' 'livre leve solto' ON  \
+                'noivo'    'quase amarrado'   OFF \
+                'casado'   'já era'           OFF \
+                'viúvo'    'livre de novo'    OFF )
+            ;;
+        format)
+            anterior=part
+            proxima=final
+            gostos=$(dialog --stdout \
+                --separate-output                      \
+                --backtitle 'Pegador de Dados'         \
+                --checklist 'Do que você gosta?' 0 0 0 \
+                'jogar futebol'      '' off \
+                'pescar'             '' off \
+                'ir ao shopping'     '' off \
+                'andar de bicicleta' '' off \
+                'ficar na internet'  '' off \
+                'dormir'             '' off )
+            ;;
+        final)
+            dialog \
+                --cr-wrap \
+                --sleep 5 \
+                --backtitle 'Pegador de Dados'   \
+                --title 'Obrigado por responder' \
+                --infobox "
+                Os dados informados foram
+                Nome  : $nome
+                Idade : $idade
+                Casado: $casado
+                Gostos: \n$gostos
+                " 14 40
+            break
+            ;;
+        *)
+            echo "Janela desconhecida '$proxima'."
+            echo Abortando programa...
+            exit
+    esac
+
+    # Aqui é feito o tratamento genérico de Código de Retorno
+    # de todas as telas. Volta para a tela anterior se for
+    # CANCELAR, sai do programa se for ESC.
+    retorno=$?
+    [ $retorno -eq 1   ] && proxima=$anterior   # cancelar
+    [ $retorno -eq 255 ] && break               # Esc
+
+done
 
 # WIP...
 # TODO
