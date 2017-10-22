@@ -36,44 +36,30 @@ do
     fi
 done
 
-cat > $LOGO <<- EOM
-             _ 
-  __ _  __ _(_)
- / _` |/ _` | |
-| (_| | (_| | |
- \__,_|\__,_|_|
-
-EOM
-
 TITULO="Arch Linux Automatic Installer"
 SUBTITULO="Arch Linux Automatic Installer"
 AAI_TMP="/tmp/aai"
+AAI_TEMAS="/tmp/aai/temas"
 AAI_CORES="${AAI_TMP}/config/color.cfg"
+
+if [ ! -d $AAI_TEMAS ]; then
+  mkdir -p $AAI_TEMAS
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TEMAS}/aai.cfg
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TEMAS}/anywhere.cfg
+fi
 
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
 if [ $? != 0 ]; then 
-    exit
-fi
-
-if [ $? == 1 ]; then 
-    TEMA="anywhere"
-fi
-
-if [ ! -d $AAI_TMP/temas/ ]; then
-  mkdir -p $AAI_TMP/temas/
-fi
-
-if [ ! -f ${AAI_TMP}/temas/${TEMA}.cfg ]; then
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TMP}/temas/${TEMA}.cfg
+  export DIALOGRC="${AAI_TEMAS}/anywhere.cfg"
+else
+  export DIALOGRC="${AAI_TEMAS}/${TEMA}.cfg"
 fi
 
 #############################################
 ########### VARS ############################
 #############################################
-export DIALOGRC="${AAI_TMP}/temas/${TEMA}.cfg"
-
 # Welcome
 dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
 
