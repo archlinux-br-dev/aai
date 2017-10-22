@@ -44,8 +44,8 @@ AAI_CORES="${AAI_TMP}/config/color.cfg"
 
 if [ ! -d $AAI_TEMAS ]; then
   mkdir -p $AAI_TEMAS
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TEMAS}/aai.cfg
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TEMAS}/anywhere.cfg
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/aai.cfg -o ${AAI_TEMAS}/aai.cfg
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/anywhere.cfg -o ${AAI_TEMAS}/anywhere.cfg
 fi
 
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
