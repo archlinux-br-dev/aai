@@ -14,7 +14,7 @@
 #############################################
 #export DIALOGRC="/tmp/aai/temas/anywhere.cfg"
 
-if [ $(id -u) != 0 ]; then
+if [ $(id -u) == 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
    exit 1
 fi
@@ -36,6 +36,9 @@ do
     fi
 done
 
+#############################################
+########### VARS ############################
+#############################################
 TITULO="Arch Linux Automatic Installer"
 SUBTITULO="Arch Linux Automatic Installer"
 AAI_TMP="/tmp/aai"
@@ -44,8 +47,8 @@ AAI_CORES="${AAI_TMP}/config/color.cfg"
 
 if [ ! -d $AAI_TEMAS ]; then
   mkdir -p $AAI_TEMAS
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/aai.cfg -o ${AAI_TEMAS}/aai.cfg
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/anywhere.cfg -o ${AAI_TEMAS}/anywhere.cfg
+  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/aai.cfg -o ${AAI_TEMAS}/aai.cfg
+  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/anywhere.cfg -o ${AAI_TEMAS}/anywhere.cfg
 fi
 
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
@@ -58,37 +61,29 @@ else
 fi
 
 #############################################
-########### VARS ############################
+########### FUNÇÕES #########################
 #############################################
 # Welcome
-dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
+function welcome() {
+  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
+}
 
-if [ $? != 0 ]; then 
-    exit
-fi
-
-#############################################
-########### LOCALES #########################
-#############################################
+# Locales
 function locale() {
-  LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
+  LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Sair" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then 
     localectl set-x11-keymap $LOCALE
-  fi  
+  else
+    exit
+  fi
 }
 
-#############################################
-########### OPÇÕES ##########################
-#############################################
+# Opções
 function opts() {
-  OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
+  OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
 
-  if [ $? != 0 ]; then 
-      exit
-  fi
-
-  if [ $? == 0 ]; then 
+  if [ $? == 0 ]; then
     for op in ${OPTS[@]}; do
       case $op in
         "Download Total") 
@@ -107,51 +102,51 @@ function opts() {
         ;;
       esac
     done
+  else
+    return $?
   fi
 }
 
-#############################################
-########### CONECTIVIDADE ###################
-#############################################
+# Conectividade
 function connect() {
   INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
-  INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
+  INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
 
-  if [ $? != 0 ]; then 
-      exit
-  fi
+  if [ $? == 0 ]; then
+    # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
+    # e = cabeada, w = wireless | systemd owns the world...
+    TIPO=$(echo $INTERFACE | head -c 1)
 
-  # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
-  # e = cabeada, w = wireless | systemd owns the world...
-  TIPO=$(echo $INTERFACE | head -c 1)
-
-  if [ "$TIPO" == "e" ]; then
-    systemctl start dhcpcd@${INTERFACE}
+    if [ "$TIPO" == "e" ]; then
+      echo "systemctl start dhcpcd@${INTERFACE}"
+    #else
+      #pacman -S wpa_supplicant wpa_actiond iw
+      #wifi-menu
+    fi
   else
-    pacman -S wpa_supplicant wpa_actiond iw
-    wifi-menu
+    return $?
   fi
+  #return $?
 }
 
-#############################################
-############ PARTICIONAMENTO ################
-#############################################
+# Particionamento
 function part() {
-  DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')
-  DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
+  DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print v++,$1}')
+  DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
-  if [ $? != 0 ]; then 
-      exit
+  if [ $? == 0 ]; then
+    echo $DISCO > ${AAI_TMP}/debug.log 
+  else
+
+  #if [ $? == 0 ]; then
+    #sudo sfdisk -d $DISCO >> $AAI_TMP/layout.txt
+    #LAYOUT_NOVO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --editbox $AAI_TMP/layout.txt 0 0 3>&1 1>&2 2>&3)
+    #dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
+    #cfdisk $DISCO
+  #fi
+
+    return $?
   fi
-
-  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
-
-  if [ $? != 0 ]; then 
-      exit
-  fi
-
-  cfdisk $DISCO
-
   # WIP...
   #sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${DISCO}
   #   o # clear the in memory partition table
@@ -173,50 +168,60 @@ function part() {
   # EOF
 }
 
-#############################################
-############ FORMATAÇÃO #####################
-#############################################
+# Formatação
 function format() {
   FILESYSTEMS=$(ls -1 /usr/bin/mkfs.* | awk -F'.' '{print $2}' | egrep -vi 'bfs|cramfs|ext2|fat|minix|msdos|udf|ufs' | awk '{print v++,$1}')
-  FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
+  FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
-  if [ $? == 0 ]; then 
-      #comando...
+  if [ $? == 0 ]; then
+    echo $FILESYSTM > $AAI_TMP/debug.log
+  else
+    return $?
   fi
+
+  return $?
 }
 
+# Final
+function final() {
+  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "Muito obrigado por usar o AAI!" 0 0 3>&1 1>&2 2>&3
+}
 
-proxima=locale
+proxima=chegada
 
 while : ; do
 
     case "$proxima" in
-        locale)
-            proxima=opts
+        chegada)
+            proxima=idioma
+            welcome
+            ;;
+        idioma)
+            anterior=chegada
+            proxima=opcoes
             locale
             ;;
-        opts)
-            anterior=locale
-            proxima=connect
+        opcoes)
+            anterior=idioma
+            proxima=conectar
             opts
             ;;
-        connect)
-            anterior=opts
-            proxima=part
+        conectar)
+            anterior=opcoes
+            proxima=particionamento
             connect
             ;;
-        part)
-            anterior=connect
-            proxima=format
+        particionamento)
+            anterior=conectar
+            proxima=formatar
             part
             ;;
-        format)
-            anterior=part
+        formatar)
+            anterior=particionamento
             proxima=final
             format
             ;;
         final)
-            dialog \
             final
             break
             ;;
@@ -227,17 +232,9 @@ while : ; do
     esac
 
     retorno=$?
-    [ $retorno -eq 1   ] && proxima=$anterior   # cancelar
-    [ $retorno -eq 255 ] && break               # Esc
+    [ $retorno -eq 1 ] && proxima=$anterior
+    [ $retorno -eq 255 ] && break
 
 done
-
-# WIP...
-# TODO
-# - Encapsulamento em funções...
-# - Detecção de instalação prévia, partições, sistemas de arquivos, reconfiguração sem formatação.
-#$(cat $ARQUIVO | cut -d: -f1 | sed 's/$/ o/')
-#sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
-#pacman -S wpa_supplicant wpa_actiond dialog iw sudo bash-completion efibootmgr
 
 exit 0
