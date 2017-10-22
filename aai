@@ -36,7 +36,7 @@ do
     fi
 done
 
-cat > $logo <<- EOM
+cat > $LOGO <<- EOM
              _ 
   __ _  __ _(_)
  / _` |/ _` | |
@@ -47,7 +47,8 @@ EOM
 
 TITULO="Arch Linux Automatic Installer"
 SUBTITULO="Arch Linux Automatic Installer"
-TMP_AAI="/tmp/aai"
+AAI_TMP="/tmp/aai"
+AAI_CORES="${AAI_TMP}/config/color.cfg"
 
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
@@ -60,18 +61,18 @@ if [ $? == 1 ]; then
     TEMA="anywhere"
 fi
 
-if [ ! -d $TMP_AAI/temas/ ]; then
-  mkdir -p $TMP_AAI/temas/
+if [ ! -d $AAI_TMP/temas/ ]; then
+  mkdir -p $AAI_TMP/temas/
 fi
 
-if [ ! -f ${TMP_AAI}/temas/${TEMA}.cfg ]; then
-  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${TMP_AAI}/temas/${TEMA}.cfg
+if [ ! -f ${AAI_TMP}/temas/${TEMA}.cfg ]; then
+  curl -s https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/${TEMA}.cfg -o ${AAI_TMP}/temas/${TEMA}.cfg
 fi
 
 #############################################
 ########### VARS ############################
 #############################################
-export DIALOGRC="${TMP_AAI}/temas/${TEMA}.cfg"
+export DIALOGRC="${AAI_TMP}/temas/${TEMA}.cfg"
 
 # Welcome
 dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "             _ \n  __ _  __ _(_)\n / _\` |/ _\` | |\n| (_| | (_| | |\n \__,_|\__,_|_|" 0 0 --and-widget --yesno "\nContinuar a instalação do Arch Linux?" 0 0 3>&1 1>&2 2>&3
@@ -206,75 +207,39 @@ while : ; do
     case "$proxima" in
         locale)
             proxima=opts
-            locale()
+            locale
             ;;
         opts)
             anterior=locale
-            proxima=idade
-            nome=$(dialog --stdout \
-                --backtitle 'Pegador de Dados' \
-                --inputbox 'Seu nome:' 0 0)
+            proxima=connect
+            opts
             ;;
         connect)
             anterior=opts
             proxima=part
-            idade=$(dialog --stdout \
-                --backtitle 'Pegador de Dados'   \
-                --menu 'Qual a sua idade?' 0 0 0 \
-                'menos de 15 anos'   '' \
-                'entre 15 e 25 anos' '' \
-                'entre 25 e 40 anos' '' \
-                'mais de 40 anos'    '' )
+            connect
             ;;
         part)
             anterior=connect
             proxima=format
-            casado=$(dialog --stdout \
-                --backtitle 'Pegador de Dados'    \
-                --radiolist 'Estado civil:' 0 0 0 \
-                'solteiro' 'livre leve solto' ON  \
-                'noivo'    'quase amarrado'   OFF \
-                'casado'   'já era'           OFF \
-                'viúvo'    'livre de novo'    OFF )
+            part
             ;;
         format)
             anterior=part
             proxima=final
-            gostos=$(dialog --stdout \
-                --separate-output                      \
-                --backtitle 'Pegador de Dados'         \
-                --checklist 'Do que você gosta?' 0 0 0 \
-                'jogar futebol'      '' off \
-                'pescar'             '' off \
-                'ir ao shopping'     '' off \
-                'andar de bicicleta' '' off \
-                'ficar na internet'  '' off \
-                'dormir'             '' off )
+            format
             ;;
         final)
             dialog \
-                --cr-wrap \
-                --sleep 5 \
-                --backtitle 'Pegador de Dados'   \
-                --title 'Obrigado por responder' \
-                --infobox "
-                Os dados informados foram
-                Nome  : $nome
-                Idade : $idade
-                Casado: $casado
-                Gostos: \n$gostos
-                " 14 40
+            final
             break
             ;;
         *)
             echo "Janela desconhecida '$proxima'."
             echo Abortando programa...
-            exit
+            exit 1
     esac
 
-    # Aqui é feito o tratamento genérico de Código de Retorno
-    # de todas as telas. Volta para a tela anterior se for
-    # CANCELAR, sai do programa se for ESC.
     retorno=$?
     [ $retorno -eq 1   ] && proxima=$anterior   # cancelar
     [ $retorno -eq 255 ] && break               # Esc
