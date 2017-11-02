@@ -26,10 +26,10 @@ sudo dd if=/home/usuario/Downloads/archlinux-2017.10.01.iso of=/dev/sdX bs=4M st
 Após o boot rode o seguinte comando: 
 
 ```bash
-bash <(curl -s -L http://bit.ly/cabron)
+bash <(curl -s -L http://bit.ly/cabron-arch)
 ```  
 
-A partir deste momento o AAI deve lhe guiar por todos os passos, desde a configuração do layout do teclado, passando pelo particionamento e terminando na instalação do GRUB(ou systemd-boot) e opcionalmente instalando gerenciadores de login(LightDM, SLiM, nodm, etc...) e gerenciadores de janelas ou ambientes de trabalho(i3wm, OpenBox, Mate, Cinnamon, Gnome, XFCE, etc...).
+A partir deste momento o Cabron deve lhe guiar por todos os passos, desde a configuração do layout do teclado, passando pelo particionamento e terminando na instalação do GRUB(ou systemd-boot) e opcionalmente instalando gerenciadores de login(LightDM, SLiM, nodm, etc...) e gerenciadores de janelas ou ambientes de trabalho(i3wm, OpenBox, Mate, Cinnamon, Gnome, XFCE, etc...).
 
 ### Suporte e Contato
 
