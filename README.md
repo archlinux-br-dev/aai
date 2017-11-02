@@ -1,14 +1,15 @@
-## AAI (Arch Linux Automatic Installer)
+## Cabron (Arch Linux Automatic Installer)
 ```
-             _ 
-  __ _  __ _(_)
- / _` |/ _` | |
-| (_| | (_| | |
- \__,_|\__,_|_|
+           _                     
+  ___ __ _| |__  _ __ ___  _ __  
+ / __/ _` | '_ \| '__/ _ \| '_ \ 
+| (_| (_| | |_) | | | (_) | | | |
+ \___\__,_|_.__/|_|  \___/|_| |_|
+                                 
                
 ```
 
-O AAI é um instalador automático simples e fácil de usar para o Arch Linux.
+O **Cabron** é um instalador automático simples e fácil de usar para o Arch Linux.
 
 ### Instalação
 
@@ -25,7 +26,7 @@ sudo dd if=/home/usuario/Downloads/archlinux-2017.10.01.iso of=/dev/sdX bs=4M st
 Após o boot rode o seguinte comando: 
 
 ```bash
-bash <(curl -s -L http://bit.ly/arch-aai)
+bash <(curl -s -L http://bit.ly/cabron)
 ```  
 
 A partir deste momento o AAI deve lhe guiar por todos os passos, desde a configuração do layout do teclado, passando pelo particionamento e terminando na instalação do GRUB(ou systemd-boot) e opcionalmente instalando gerenciadores de login(LightDM, SLiM, nodm, etc...) e gerenciadores de janelas ou ambientes de trabalho(i3wm, OpenBox, Mate, Cinnamon, Gnome, XFCE, etc...).

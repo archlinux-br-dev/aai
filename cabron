@@ -1,18 +1,18 @@
 #!/bin/bash
 #
-# AAI 0.1b - Here you go!
+# CABRON 0.1b - Here you go!
 # 
 #   Criado em 07/10/2017
 # Alterado em 21/10/2017
 # 
 # Por: Arch Linux Brasil Dev Team
-# Instalação: bash <(curl -s -L http://bit.ly/arch-aai)
-# Maiores informações: https://archlinux-br-dev.github.io/aai
+# Instalação: bash <(curl -s -L http://bit.ly/arch-cabron)
+# Maiores informações: https://archlinux-br-dev.github.io/cabron
 
 #############################################
 ########## Parametros básicos ###############
 #############################################
-#export DIALOGRC="/tmp/aai/temas/anywhere.cfg"
+#export DIALOGRC="/tmp/cabron/temas/anywhere.cfg"
 
 if [ $(id -u) == 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
@@ -41,23 +41,23 @@ done
 #############################################
 TITULO="Arch Linux Automatic Installer"
 SUBTITULO="Arch Linux Automatic Installer"
-AAI_TMP="/tmp/aai"
-AAI_TEMAS="/tmp/aai/temas"
-AAI_CORES="${AAI_TMP}/config/color.cfg"
+CABRON_TMP="/tmp/cabron"
+CABRON_TEMAS="/tmp/cabron/temas"
+CABRON_CORES="${CABRON_TMP}/config/color.cfg"
 
-if [ ! -d $AAI_TEMAS ]; then
-  mkdir -p $AAI_TEMAS
-  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/aai.cfg -o ${AAI_TEMAS}/aai.cfg
-  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/aai/master/temas/anywhere.cfg -o ${AAI_TEMAS}/anywhere.cfg
+if [ ! -d $CABRON_TEMAS ]; then
+  mkdir -p $CABRON_TEMAS
+  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/cabron/master/temas/cabron.cfg -o ${CABRON_TEMAS}/cabron.cfg
+  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/cabron/master/temas/anywhere.cfg -o ${CABRON_TEMAS}/anywhere.cfg
 fi
 
 TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
-TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do AAI" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
+TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do CABRON" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
 if [ $? != 0 ]; then 
-  export DIALOGRC="${AAI_TEMAS}/anywhere.cfg"
+  export DIALOGRC="${CABRON_TEMAS}/anywhere.cfg"
 else
-  export DIALOGRC="${AAI_TEMAS}/${TEMA}.cfg"
+  export DIALOGRC="${CABRON_TEMAS}/${TEMA}.cfg"
 fi
 
 #############################################
@@ -135,13 +135,13 @@ function part() {
   DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then
-    echo $DISCO > ${AAI_TMP}/debug.log 
+    echo $DISCO > ${CABRON_TMP}/debug.log 
   else
 
   #if [ $? == 0 ]; then
-    #sudo sfdisk -d $DISCO >> $AAI_TMP/layout.txt
-    #LAYOUT_NOVO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --editbox $AAI_TMP/layout.txt 0 0 3>&1 1>&2 2>&3)
-    #dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O AAI irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
+    #sudo sfdisk -d $DISCO >> $CABRON_TMP/layout.txt
+    #LAYOUT_NOVO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --editbox $CABRON_TMP/layout.txt 0 0 3>&1 1>&2 2>&3)
+    #dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "O CABRON irá rodar o programa cfdisk $DISCO agora.\nRecomendamos um layout com 4 partições.\n- ${DISCO}1 com 513MB, Tipo EFI\n- ${DISCO}2 com 50GB, Tipo ext4,\n- ${DISCO}3 com 4GB, Tipo SWAP\n- ${DISCO}4 com todo o espaço restante, Tipo ext4" 0 0 3>&1 1>&2 2>&3
     #cfdisk $DISCO
   #fi
 
@@ -174,7 +174,7 @@ function format() {
   FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then
-    echo $FILESYSTM > $AAI_TMP/debug.log
+    echo $FILESYSTM > $CABRON_TMP/debug.log
   else
     return $?
   fi
@@ -184,7 +184,7 @@ function format() {
 
 # Final
 function final() {
-  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "Muito obrigado por usar o AAI!" 0 0 3>&1 1>&2 2>&3
+  dialog --backtitle "$TITULO" --title "$SUBTITULO" --msgbox "Muito obrigado por usar o CABRON!" 0 0 3>&1 1>&2 2>&3
 }
 
 proxima=chegada
