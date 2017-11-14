@@ -1,4 +1,4 @@
-## Cabron (Arch Linux Automatic Installer)
+## Cabron Arch Linux Helper
 ```
            _                     
   ___ __ _| |__  _ __ ___  _ __  
@@ -34,8 +34,10 @@ A partir deste momento o Cabron deve lhe guiar por todos os passos, desde a conf
 ### Suporte e Contato
 
 [Telegram](https://t.me/archbrdev)  
-[E-mail](mailto:lucas@archlinux.com.br)
+[Lista de Discussão](mailto:lucas@archlinux.com.br)
 
 ### Motivação
 
 Notando que muitos usuários nos fóruns de discussão, IRC, Telegram, listas de discussão e outros meios de comunicação sentiam alguma dificuldade em instalar o Arch Linux sem nenhum tipo de script ou helper, nós nos empenhamos em construir um script simples, fácil e limpo para guiar estes usuários atráves da instalação do Arch Linux, este maravilhoso sistema operacional.
+
+![Cabron](img/cabron.svg "Vacron")

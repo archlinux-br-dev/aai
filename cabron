@@ -14,7 +14,7 @@
 #############################################
 #export DIALOGRC="/tmp/cabron/temas/anywhere.cfg"
 
-if [ $(id -u) == 0 ]; then
+if [ $(id -u) != 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
    exit 1
 fi
