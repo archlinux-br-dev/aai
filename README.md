@@ -57,6 +57,6 @@ Notando que muitos usuários nos fóruns de discussão, IRC, Telegram, listas de
 <a name="licenca"></a>
 ### Licença
 
-Em breve.
+[GPL-3.0](LICENSE)
 
 ![Cabron](img/cabron.svg "Vacron")
