@@ -1,4 +1,15 @@
 ## Cabron Arch Linux Helper
+
+### Índice
+
+* [O que é?](#oque)
+* [Instalação](#instalacao)
+* [Suporte e Contato](#suporte)
+* [Motivação](#motivacao)
+* [Licença](#licenca)
+
+<a name="oque"></a>
+
 ```
            _                     
   ___ __ _| |__  _ __ ___  _ __  
@@ -11,6 +22,7 @@
 
 O **Cabron** é um instalador automático simples e fácil de usar para o Arch Linux.
 
+<a name="instalacao"></a>
 ### Instalação
 
 [Baixe](https://www.archlinux.org/download/) o [Arch Linux](https://www.archlinux.org) normalmente, grave a imagem em um CD, DVD ou Pen-Drive, utilizando o [Etcher](https://etcher.io)(Windows, Linux, MacOS) ou manualmente(Linux): 
@@ -31,13 +43,20 @@ bash <(curl -s -L http://bit.ly/cabron-arch)
 
 A partir deste momento o Cabron deve lhe guiar por todos os passos, desde a configuração do layout do teclado, passando pelo particionamento e terminando na instalação do GRUB(ou systemd-boot) e opcionalmente instalando gerenciadores de login(LightDM, SLiM, nodm, etc...) e gerenciadores de janelas ou ambientes de trabalho(i3wm, OpenBox, Mate, Cinnamon, Gnome, XFCE, etc...).
 
+<a name="suporte"></a>
 ### Suporte e Contato
 
 [Telegram](https://t.me/archbrdev)  
 [Lista de Discussão](mailto:cabron@googlegroups.com)
 
+<a name="motivacao"></a>
 ### Motivação
 
 Notando que muitos usuários nos fóruns de discussão, IRC, Telegram, listas de discussão e outros meios de comunicação sentiam alguma dificuldade em instalar o Arch Linux sem nenhum tipo de script ou helper, nós nos empenhamos em construir um script simples, fácil e limpo para guiar estes usuários atráves da instalação do Arch Linux, este maravilhoso sistema operacional.
+
+<a name="licenca"></a>
+### Licença
+
+Em breve.
 
 ![Cabron](img/cabron.svg "Vacron")
