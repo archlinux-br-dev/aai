@@ -12,29 +12,23 @@
 #############################################
 ########## Parametros básicos ###############
 #############################################
-#export DIALOGRC="/tmp/cabron/temas/anywhere.cfg"
+debug=1
 
 if [ $(id -u) != 0 ]; then
    echo "Este script precisa ser usado como root." 1>&2
    exit 1
 fi
 
-apps=( "dialog" )
-
-for app in ${apps[@]} 
-do
-    which $app 1> /dev/null 2> /dev/null
-    if [ $? != 0 ]; then
-        echo
-        read -p "O aplicativo $app não foi encontrado. Deseja instalar? [s/N] " resp
-        if [ $resp == [sS] ]; then 
-            pacman -S $app
-        else
-            echo "Programa abortado..."
-            exit 1
-        fi
-    fi
-done
+which dialog 1> /dev/null 2> /dev/null
+if [ $? != 0 ]; then
+  read -p "O aplicativo dialog não foi encontrado. Deseja instalar? [s/N] " resp
+  if [ $resp == [sS] ]; then 
+    pacman -S dialog
+  else
+    echo "Programa abortado."
+    exit 1
+  fi
+fi
 
 #############################################
 ########### VARS ############################
@@ -42,16 +36,22 @@ done
 TITULO="Arch Linux Automatic Installer"
 SUBTITULO="Arch Linux Automatic Installer"
 CABRON_TMP="/tmp/cabron"
-CABRON_TEMAS="/tmp/cabron/temas"
-CABRON_CORES="${CABRON_TMP}/config/color.cfg"
+CABRON_REPO="https://github.com/archlinux-br-dev/cabron"
+CABRON_REPO_RAW="https://raw.githubusercontent.com/archlinux-br-dev/cabron/master"
+CABRON_LIB="${CABRON_TMP}/lib"
+CABRON_CONFIG="${CABRON_TMP}/config"
+CABRON_TEMAS="${CABRON_TMP}/temas"
+CABRON_CORES="${CABRON_CONFIG}/color.cfg"
+CABRON_DEBUG_LOG="${CABRON_TMP}/debug.log"
+:> $CABRON_DEBUG_LOG
 
 if [ ! -d $CABRON_TEMAS ]; then
   mkdir -p $CABRON_TEMAS
-  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/cabron/master/temas/cabron.cfg -o ${CABRON_TEMAS}/cabron.cfg
-  curl -s -L https://raw.githubusercontent.com/archlinux-br-dev/cabron/master/temas/anywhere.cfg -o ${CABRON_TEMAS}/anywhere.cfg
+  curl -s -L ${CABRON_REPO_RAW}/temas/cabron.cfg -o ${CABRON_TEMAS}/cabron.cfg
+  curl -s -L ${CABRON_REPO_RAW}/temas/anywhere.cfg -o ${CABRON_TEMAS}/anywhere.cfg
 fi
 
-TEMAS=$(ls -1 temas/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
+TEMAS=$(ls -1 ${CABRON_TEMAS}/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do CABRON" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
 if [ $? != 0 ]; then 
@@ -73,7 +73,11 @@ function locale() {
   LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Sair" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then 
-    localectl set-x11-keymap $LOCALE
+    if [ $debug = 1 ]; then
+      echo "localectl set-x11-keymap $LOCALE" >> $CABRON_DEBUG_LOG
+    else
+      localectl set-x11-keymap $LOCALE
+    fi
   else
     exit
   fi
@@ -135,7 +139,12 @@ function part() {
   DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then
-    echo $DISCO > ${CABRON_TMP}/debug.log 
+    if [ $debug = 1 ]; then
+      sfdisk -d $DISCO >> $CABRON_DEBUG_LOG
+      sfdisk -d $DISCO > ${CABRON_PATH}/layout.txt
+    else
+      sfdisk -d $DISCO > ${CABRON_PATH}/layout.txt
+    fi
   else
 
   #if [ $? == 0 ]; then
@@ -174,7 +183,12 @@ function format() {
   FILESYSTEM=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Sistema de arquivos? (recomendamos ext4)" 0 0 5 $FILESYSTEMS 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then
-    echo $FILESYSTM > $CABRON_TMP/debug.log
+    if [ $debug = 1 ]; then
+      echo $FILESYSTEM > $CABRON_DEBUG_LOG
+    else
+      # Inserir rotina de checagem com dialog e uma contagem regressiva de 10 segundos para a pessoa desistir...
+      echo $FILESYSTEM > $CABRON_DEBUG_LOG
+    fi
   else
     return $?
   fi
