@@ -34,7 +34,7 @@ A partir deste momento o Cabron deve lhe guiar por todos os passos, desde a conf
 ### Suporte e Contato
 
 [Telegram](https://t.me/archbrdev)  
-[Lista de Discussão](mailto:lucas@archlinux.com.br)
+[Lista de Discussão](mailto:cabron@googlegroups.com)
 
 ### Motivação
 
