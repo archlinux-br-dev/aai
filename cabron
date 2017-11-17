@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 # CABRON 0.1b - Here you go!
-# 
+#
 #   Criado em 07/10/2017
 # Alterado em 21/10/2017
-# 
+#
 # Por: Arch Linux Brasil Dev Team
 # Instalação: bash <(curl -s -L http://bit.ly/arch-cabron)
 # Maiores informações: https://archlinux-br-dev.github.io/cabron
@@ -22,7 +22,7 @@ fi
 which dialog 1> /dev/null 2> /dev/null
 if [ $? != 0 ]; then
   read -p "O aplicativo dialog não foi encontrado. Deseja instalar? [s/N] " resp
-  if [ $resp == [sS] ]; then 
+  if [ $resp == [sS] ]; then
     pacman -S dialog
   else
     echo "Programa abortado."
@@ -56,7 +56,7 @@ fi
 TEMAS=$(ls -1 ${CABRON_TEMAS}/ | xargs -I{} basename {} .cfg | awk '{print $1, $1 ".cfg"}')
 TEMA=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --menu "Escolha o tema do CABRON" 0 0 2 $TEMAS 3>&1 1>&2 2>&3)
 
-if [ $? != 0 ]; then 
+if [ $? != 0 ]; then
   export DIALOGRC="${CABRON_TEMAS}/anywhere.cfg"
 else
   export DIALOGRC="${CABRON_TEMAS}/${TEMA}.cfg"
@@ -74,7 +74,7 @@ function welcome() {
 function locale() {
   LOCALE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Sair" --inputbox "Seu locale atual:" 0 0 "br abnt2" 3>&1 1>&2 2>&3)
 
-  if [ $? == 0 ]; then 
+  if [ $? == 0 ]; then
     if [ $debug = 1 ]; then
       echo "localectl set-x11-keymap $LOCALE" >> $CABRON_DEBUG_LOG
     else
@@ -92,13 +92,13 @@ function opts() {
   if [ $? == 0 ]; then
     for op in ${OPTS[@]}; do
       case $op in
-        "Download Total") 
+        "Download Total")
           sed -i '/TotalDownload/s/^#//g' /etc/pacman.conf
         ;;
-        "Cores") 
+        "Cores")
           sed -i '/Color/s/^#//g' /etc/pacman.conf
         ;;
-        "Reflector") 
+        "Reflector")
           pacman -Sy
           pacman -S reflector
           if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
@@ -164,7 +164,7 @@ function part() {
   #   n # new partition
   #   p # primary partition
   #   1 # partition number 1
-  #     # default - start at beginning of disk 
+  #     # default - start at beginning of disk
   #   +100M # 100 MB boot parttion
   #   n # new partition
   #   p # primary partition
