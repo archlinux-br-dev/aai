@@ -43,7 +43,9 @@ CABRON_CONFIG="${CABRON_TMP}/config"
 CABRON_TEMAS="${CABRON_TMP}/temas"
 CABRON_CORES="${CABRON_CONFIG}/color.cfg"
 CABRON_DEBUG_LOG="${CABRON_TMP}/debug.log"
-:> $CABRON_DEBUG_LOG
+
+[ ! -d $CABRON_TMP ] && mkdir $CABRON_TMP
+[ -f $CABRON_DEBUG_LOG ] && :> $CABRON_DEBUG_LOG
 
 if [ ! -d $CABRON_TEMAS ]; then
   mkdir -p $CABRON_TEMAS
