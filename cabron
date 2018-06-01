@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# CABRON 0.1b - Here you go!
+# CABRON 0.2b
 #
-#   Criado em 07/10/2017
-# Alterado em 21/10/2017
+#   Criado em: 07/10/2017
+# Alterado em: 21/10/2017
 #
 # Por: Arch Linux Brasil Dev Team
 # Instalação: bash <(curl -s -L http://bit.ly/arch-cabron)
@@ -22,8 +22,8 @@ fi
 which dialog 1> /dev/null 2> /dev/null
 if [ $? != 0 ]; then
   read -p "O aplicativo dialog não foi encontrado. Deseja instalar? [s/N] " resp
-  if [ $resp == [sS] ]; then
-    pacman -S dialog
+  if [[ $resp = *[sS]* ]]; then
+    pacman -S dialog || echo "Erro inesperado." ; exit
   else
     echo "Programa abortado."
     exit 1
@@ -33,8 +33,8 @@ fi
 #############################################
 ########### VARS ############################
 #############################################
-TITULO="Arch Linux Automatic Installer"
-SUBTITULO="Arch Linux Automatic Installer"
+TITULO="Cabron Arch Linux Installer"
+SUBTITULO="Cabron Arch Linux Installer"
 CABRON_TMP="/tmp/cabron"
 CABRON_REPO="https://github.com/archlinux-br-dev/cabron"
 CABRON_REPO_RAW="https://raw.githubusercontent.com/archlinux-br-dev/cabron/master"
@@ -87,9 +87,13 @@ function locale() {
 
 # Opções
 function opts() {
-  OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" on 3>&1 1>&2 2>&3)
+  OPTS=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --checklist "Opções do pacman:" 0 0 0 "Download Total" "" on "Cores" "" off "Reflector" "" off 3>&1 1>&2 2>&3)
 
   if [ $? == 0 ]; then
+
+    [ ! -f /etc/pacman.d/mirrorlist.bkp ] && cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
+    [ ! -f /etc/pacman.conf.bkp ] && cp /etc/pacman.conf /etc/pacman.conf.bkp
+
     for op in ${OPTS[@]}; do
       case $op in
         "Download Total")
@@ -99,12 +103,9 @@ function opts() {
           sed -i '/Color/s/^#//g' /etc/pacman.conf
         ;;
         "Reflector")
-          pacman -Sy
-          pacman -S reflector
-          if [ ! -f /etc/pacman.d/mirrorlist.bkp ]; then
-            cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bkp
-          fi
-          reflector --verbose -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+          pacman -Sy 1> /dev/null 2> /dev/null
+          pacman -S reflector --noconfirm 1> /dev/null 2> /dev/null
+          reflector -l 5 --sort rate --save /etc/pacman.d/mirrorlist
         ;;
       esac
     done
@@ -115,37 +116,34 @@ function opts() {
 
 # Conectividade
 function connect() {
-  INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print v++,$1}')
+  INTERFACES=$(ip -o link show | awk -F': ' '{print $2}' | egrep -v lo | awk '{print $1,v++}')
   INTERFACE=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual sua interface?" 0 0 3 $INTERFACES 3>&1 1>&2 2>&3)
 
-  if [ $? == 0 ]; then
+  #if [ $? == 0 ]; then
     # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
     # e = cabeada, w = wireless | systemd owns the world...
-    TIPO=$(echo $INTERFACE | head -c 1)
+  #  TIPO=$(echo $INTERFACE | head -c 1)
 
-    if [ "$TIPO" == "e" ]; then
-      echo "systemctl start dhcpcd@${INTERFACE}"
-    #else
-      #pacman -S wpa_supplicant wpa_actiond iw
-      #wifi-menu
-    fi
-  else
-    return $?
-  fi
-  #return $?
+  #  if [ "$TIPO" == "e" ]; then
+  #    echo "systemctl start dhcpcd@${INTERFACE}"
+  #  else
+  #    pacman -S wpa_supplicant wpa_actiond iw
+  #    wifi-menu
+  #  fi
+  #fi
 }
 
 # Particionamento
 function part() {
-  DISCOS=$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print v++,$1}')
+  DISCOS="$(basename -a $(ls -1 /dev/sd*) | tr -d [0-9] | uniq | awk '{print $1,v++}')"
   DISCO=$(dialog --backtitle "$TITULO" --title "$SUBTITULO" --ok-label "Avançar" --cancel-label "Voltar" --menu "Qual seu disco?" 0 0 4 $DISCOS 3>&1 1>&2 2>&3)
 
-  if [ $? == 0 ]; then
-    if [ $debug = 1 ]; then
-      sfdisk -d $DISCO >> $CABRON_DEBUG_LOG
-      sfdisk -d $DISCO > ${CABRON_PATH}/layout.txt
+  if [ $DISCO ]; then
+    if [ $debug == 1 ]; then
+      echo "sfdisk -d $DISCO" >> $CABRON_DEBUG_LOG
+      #echo "sfdisk -d $DISCO" > ${CABRON_PATH}/layout.txt
     else
-      sfdisk -d $DISCO > ${CABRON_PATH}/layout.txt
+      sfdisk -d $D > ${CABRON_PATH}/layout.txt
     fi
   else
 
@@ -156,7 +154,7 @@ function part() {
     #cfdisk $DISCO
   #fi
 
-    return $?
+    return 1
   fi
   # WIP...
   #sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk ${DISCO}
